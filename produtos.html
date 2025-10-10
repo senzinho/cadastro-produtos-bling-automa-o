@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro em Massa - Bling</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0f1419;
+            color: #20B2AA;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        #app {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 0 0 40px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #1a2930;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #20B2AA;
+            font-weight: 400;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #5F9EA0;
+            font-size: 0.95em;
+            font-weight: 300;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #1a2930;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            color: #5F9EA0;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            color: #20B2AA;
+            background: rgba(32, 178, 170, 0.05);
+        }
+
+        .tab.active {
+            color: #20B2AA;
+            border-bottom-color: #20B2AA;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #161f27;
+            border: 1px solid #1a2930;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #5F9EA0;
+            font-size: 0.85em;
+            margin-bottom: 12px;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .numero {
+            font-size: 2.2em;
+            color: #20B2AA;
+            font-weight: 300;
+        }
+
+        .card {
+            background: #161f27;
+            border: 1px solid #1a2930;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #20B2AA;
+            font-size: 1.1em;
+            font-weight: 500;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1a2930;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #5F9EA0;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+
+        .form-group label .required {
+            color: #e85d75;
+            margin-left: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0f1419;
+            border: 1px solid #1a2930;
+            border-radius: 6px;
+            color: #20B2AA;
+            font-size: 0.95em;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #20B2AA;
+            background: #161f27;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Upload de Imagens */
+        .image-upload-container {
+            margin-top: 20px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .image-slot {
+            aspect-ratio: 1;
+            border: 2px dashed #1a2930;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            background: #0f1419;
+        }
+
+        .image-slot:hover {
+            border-color: #20B2AA;
+            background: rgba(32, 178, 170, 0.05);
+        }
+
+        .image-slot.has-image {
+            border-style: solid;
+            cursor: default;
+        }
+
+        .image-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-slot .placeholder {
+            color: #5F9EA0;
+            font-size: 0.85em;
+            text-align: center;
+        }
+
+        .image-slot .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(232, 93, 117, 0.9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .image-slot .remove-btn:hover {
+            background: #e85d75;
+            transform: scale(1.1);
+        }
+
+        .image-input {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #20B2AA;
+            color: #0f1419;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #48D1CC;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #20B2AA;
+            border: 1px solid #1a2930;
+        }
+
+        .btn-secondary:hover {
+            background: #161f27;
+            border-color: #20B2AA;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #e85d75;
+            border: 1px solid #1a2930;
+        }
+
+        .btn-danger:hover {
+            background: rgba(232, 93, 117, 0.1);
+            border-color: #e85d75;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid;
+            font-size: 0.9em;
+        }
+
+        .alert-success {
+            background: rgba(32, 178, 170, 0.1);
+            border-color: #20B2AA;
+            color: #20B2AA;
+        }
+
+        .alert-error {
+            background: rgba(232, 93, 117, 0.1);
+            border-color: #e85d75;
+            color: #e85d75;
+        }
+
+        .alert-info {
+            background: rgba(95, 158, 160, 0.1);
+            border-color: #5F9EA0;
+            color: #5F9EA0;
+        }
+
+        .tabela-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #1a2930;
+        }
+
+        th {
+            background: transparent;
+            color: #5F9EA0;
+            font-weight: 500;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            color: #20B2AA;
+            font-size: 0.9em;
+        }
+
+        tr:hover {
+            background: rgba(32, 178, 170, 0.03);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-pendente {
+            background: rgba(255, 193, 7, 0.15);
+            color: #FFC107;
+        }
+
+        .status-sucesso {
+            background: rgba(32, 178, 170, 0.15);
+            color: #20B2AA;
+        }
+
+        .status-erro {
+            background: rgba(232, 93, 117, 0.15);
+            color: #e85d75;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #5F9EA0;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #5F9EA0;
+            font-size: 1em;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: transparent;
+            color: #20B2AA;
+            border: 1px solid #1a2930;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .file-label:hover {
+            background: #161f27;
+            border-color: #20B2AA;
+        }
+
+        .info-text {
+            color: #5F9EA0;
+            margin-top: 12px;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1024px) {
+            .form-grid-4, .form-grid-3, .form-grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .images-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>Cadastro em Massa - Bling</h1>
+            <p>Sistema de importação de produtos via API</p>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total</h3>
+                <div class="numero">{{ produtos.length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Cadastrados</h3>
+                <div class="numero">{{ produtosCadastrados }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pendentes</h3>
+                <div class="numero">{{ produtosPendentes }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Erros</h3>
+                <div class="numero">{{ produtosErro }}</div>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div v-if="alerta.mostrar" :class="'alert alert-' + alerta.tipo">
+            {{ alerta.mensagem }}
+        </div>
+
+        <!-- Abas -->
+        <div class="tabs">
+            <button class="tab" :class="{active: abaAtiva === 'adicionar'}" @click="abaAtiva = 'adicionar'">
+                Adicionar Produto
+            </button>
+            <button class="tab" :class="{active: abaAtiva === 'fila'}" @click="abaAtiva = 'fila'">
+                Fila de Produtos ({{ produtos.length }})
+            </button>
+            <button class="tab" :class="{active: abaAtiva === 'importar'}" @click="abaAtiva = 'importar'">
+                Importar CSV
+            </button>
+        </div>
+
+        <!-- Conteúdo das Abas -->
+        
+        <!-- ABA: Adicionar Produto -->
+        <div class="tab-content" :class="{active: abaAtiva === 'adicionar'}">
+            <div class="card">
+                <h2 class="section-title">Informações Básicas</h2>
+                
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Código <span class="required">*</span></label>
+                        <input v-model="novoProduto.codigo" type="text" placeholder="Ex: PROD001">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Situação <span class="required">*</span></label>
+                        <select v-model="novoProduto.situacao">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Unidade <span class="required">*</span></label>
+                        <select v-model="novoProduto.unidade">
+                            <option value="Un">Unidade</option>
+                            <option value="PC">Peça</option>
+                            <option value="KG">Quilograma</option>
+                            <option value="MT">Metro</option>
+                            <option value="CX">Caixa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição do Produto <span class="required">*</span></label>
+                    <input v-model="novoProduto.descricao" type="text" placeholder="Nome completo do produto">
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição Curta</label>
+                    <textarea v-model="novoProduto.descricaoCurta" placeholder="Descrição resumida para listagens"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição Complementar</label>
+                    <textarea v-model="novoProduto.descricaoComplementar" placeholder="Descrição detalhada do produto"></textarea>
+                </div>
+
+                <h2 class="section-title">Imagens do Produto</h2>
+                <div class="image-upload-container">
+                    <p class="info-text">Adicione até 8 imagens do produto</p>
+                    <div class="images-grid">
+                        <div v-for="(imagem, index) in 8" :key="index" 
+                             class="image-slot" 
+                             :class="{'has-image': novoProduto.imagens[index]}"
+                             @click="!novoProduto.imagens[index] && abrirSeletorImagem(index)">
+                            <img v-if="novoProduto.imagens[index]" :src="novoProduto.imagens[index]" alt="Imagem do produto">
+                            <div v-else class="placeholder">
+                                <div>+</div>
+                                <div>Imagem {{ index + 1 }}</div>
+                            </div>
+                            <button v-if="novoProduto.imagens[index]" 
+                                    class="remove-btn" 
+                                    @click.stop="removerImagem(index)">
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                    <input type="file" 
+                           ref="imageInput" 
+                           class="image-input" 
+                           accept="image/*" 
+                           @change="handleImageUpload">
+                </div>
+
+                <h2 class="section-title">Preços e Custos</h2>
+                <div class="form-grid-4">
+                    <div class="form-group">
+                        <label>Preço de Venda (R$) <span class="required">*</span></label>
+                        <input v-model="novoProduto.preco" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Preço de Custo (R$)</label>
+                        <input v-model="novoProduto.precoCusto" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Preço de Compra (R$)</label>
+                        <input v-model="novoProduto.precoCompra" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Valor IPI Fixo (R$)</label>
+                        <input v-model="novoProduto.valorIPIFixo" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+
+                <h2 class="section-title">Estoque</h2>
+                <div class="form-grid-4">
+                    <div class="form-group">
+                        <label>Estoque Atual</label>
+                        <input v-model="novoProduto.estoque" type="number" step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estoque Mínimo</label>
+                        <input v-model="novoProduto.estoqueMinimo" type="number" step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estoque Máximo</label>
+                        <input v-model="novoProduto.estoqueMaximo" type="number" step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Localização</label>
+                        <input v-model="novoProduto.localizacao" type="text" placeholder="Ex: A1, Prateleira 3">
+                    </div>
+                </div>
+
+                <h2 class="section-title">Dimensões e Peso</h2>
+                <div class="form-grid-4">
+                    <div class="form-group">
+                        <label>Peso Líquido (Kg)</label>
+                        <input v-model="novoProduto.pesoLiquido" type="number" step="0.001" placeholder="0.000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Peso Bruto (Kg)</label>
+                        <input v-model="novoProduto.pesoBruto" type="number" step="0.001" placeholder="0.000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Largura (cm)</label>
+                        <input v-model="novoProduto.largura" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Altura (cm)</label>
+                        <input v-model="novoProduto.altura" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="form-grid-4">
+                    <div class="form-group">
+                        <label>Profundidade (cm)</label>
+                        <input v-model="novoProduto.profundidade" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Volumes</label>
+                        <input v-model="novoProduto.volumes" type="number" placeholder="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Itens por Caixa</label>
+                        <input v-model="novoProduto.itensPorCaixa" type="number" step="0.01" placeholder="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Unidade de Medida</label>
+                        <select v-model="novoProduto.unidadeMedida">
+                            <option value="Centímetro">Centímetro</option>
+                            <option value="Metro">Metro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h2 class="section-title">Informações Fiscais</h2>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>NCM</label>
+                        <input v-model="novoProduto.ncm" type="text" placeholder="Ex: 2106.90.30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Origem</label>
+                        <select v-model="novoProduto.origem">
+                            <option value="0">0 - Nacional</option>
+                            <option value="1">1 - Estrangeira (Importação direta)</option>
+                            <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>CEST</label>
+                        <input v-model="novoProduto.cest" type="text" placeholder="Código CEST">
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>GTIN/EAN</label>
+                        <input v-model="novoProduto.gtinEan" type="text" placeholder="Código de barras">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>GTIN/EAN da Embalagem</label>
+                        <input v-model="novoProduto.gtinEanEmbalagem" type="text" placeholder="Código de barras da embalagem">
+                    </div>
+                </div>
+
+                <h2 class="section-title">Informações Adicionais</h2>
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input v-model="novoProduto.marca" type="text" placeholder="Nome da marca">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fornecedor</label>
+                        <input v-model="novoProduto.fornecedor" type="text" placeholder="Nome do fornecedor">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Código no Fornecedor</label>
+                        <input v-model="novoProduto.codigoFornecedor" type="text" placeholder="SKU do fornecedor">
+                    </div>
+                </div>
+
+                <div class="form-grid-3">
+                    <div class="form-group">
+                        <label>Tipo de Produção</label>
+                        <select v-model="novoProduto.tipoProducao">
+                            <option value="Própria">Própria</option>
+                            <option value="Terceiros">Terceiros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Condição do Produto</label>
+                        <select v-model="novoProduto.condicao">
+                            <option value="NOVO">Novo</option>
+                            <option value="USADO">Usado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Frete Grátis</label>
+                        <select v-model="novoProduto.freteGratis">
+                            <option value="NÃO">Não</option>
+                            <option value="SIM">Sim</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Categoria do Produto</label>
+                        <input v-model="novoProduto.categoria" type="text" placeholder="Ex: Eletrônicos>>Smartphones">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Grupo de Produtos</label>
+                        <input v-model="novoProduto.grupoProdutos" type="text" placeholder="Grupo/Coleção">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea v-model="novoProduto.observacoes" placeholder="Observações internas sobre o produto"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" @click="adicionarProduto">Adicionar à Fila</button>
+                    <button class="btn btn-secondary" @click="limparFormulario">Limpar Formulário</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: Fila de Produtos -->
+        <div class="tab-content" :class="{active: abaAtiva === 'fila'}">
+            <div class="card">
+                <h2 class="section-title">Produtos Aguardando Envio</h2>
+                
+                <div v-if="produtos.length === 0" class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <div>Nenhum produto na fila</div>
+                </div>
+
+                <div v-else>
+                    <div class="tabela-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th>Preço</th>
+                                    <th>Estoque</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(produto, index) in produtos" :key="index">
+                                    <td>{{ produto.codigo }}</td>
+                                    <td>{{ produto.descricao }}</td>
+                                    <td>R$ {{ parseFloat(produto.preco).toFixed(2) }}</td>
+                                    <td>{{ produto.estoque }}</td>
+                                    <td>
+                                        <span :class="'status status-' + produto.status">
+                                            {{ produto.statusTexto }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.85em;" @click="removerProduto(index)">
+                                            Remover
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 24px;">
+                        <button class="btn" @click="enviarProdutos" :disabled="carregando">
+                            {{ carregando ? 'Enviando...' : 'Enviar para Bling' }}
+                        </button>
+                        <button class="btn btn-danger" @click="limparTodos">
+                            Limpar Todos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: Importar CSV -->
+        <div class="tab-content" :class="{active: abaAtiva === 'importar'}">
+            <div class="card">
+                <h2 class="section-title">Importar Produtos via CSV</h2>
+                
+                <input type="file" id="csvInput" style="display: none;" accept=".csv" @change="importarCSV">
+                <label for="csvInput" class="file-label">Selecionar Arquivo CSV</label>
+                
+                <p class="info-text">
+                    O arquivo CSV deve conter as colunas: Código, Descrição, Unidade, Preço, e opcionalmente outros campos como NCM, Estoque, etc.
+                </p>
+            </div>
+        </div>
+
+        <div v-if="carregando" class="loading">
+            Enviando produtos para o Bling
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    abaAtiva: 'adicionar',
+                    imagemIndexAtual: null,
+                    novoProduto: this.getNovoProdutoVazio(),
+                    produtos: [],
+                    carregando: false,
+                    alerta: {
+                        mostrar: false,
+                        tipo: 'success',
+                        mensagem: ''
+                    },
+                    apiUrl: 'http://localhost:5000'
+                }
+            },
+            computed: {
+                produtosCadastrados() {
+                    return this.produtos.filter(p => p.status === 'sucesso').length;
+                },
+                produtosPendentes() {
+                    return this.produtos.filter(p => p.status === 'pendente').length;
+                },
+                produtosErro() {
+                    return this.produtos.filter(p => p.status === 'erro').length;
+                }
+            },
+            methods: {
+                getNovoProdutoVazio() {
+                    return {
+                        codigo: '',
+                        descricao: '',
+                        unidade: 'Un',
+                        situacao: 'Ativo',
+                        preco: '',
+                        precoCusto: '',
+                        precoCompra: '',
+                        valorIPIFixo: '',
+                        estoque: '',
+                        estoqueMinimo: '',
+                        estoqueMaximo: '',
+                        localizacao: '',
+                        pesoLiquido: '',
+                        pesoBruto: '',
+                        largura: '',
+                        altura: '',
+                        profundidade: '',
+                        volumes: '',
+                        itensPorCaixa: '',
+                        unidadeMedida: 'Centímetro',
+                        ncm: '',
+                        origem: '0',
+                        cest: '',
+                        gtinEan: '',
+                        gtinEanEmbalagem: '',
+                        marca: '',
+                        fornecedor: '',
+                        codigoFornecedor: '',
+                        tipoProducao: 'Própria',
+                        condicao: 'NOVO',
+                        freteGratis: 'NÃO',
+                        categoria: '',
+                        grupoProdutos: '',
+                        descricaoCurta: '',
+                        descricaoComplementar: '',
+                        observacoes: '',
+                        imagens: []
+                    };
+                },
+
+                abrirSeletorImagem(index) {
+                    this.imagemIndexAtual = index;
+                    this.$refs.imageInput.click();
+                },
+
+                handleImageUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.novoProduto.imagens[this.imagemIndexAtual] = e.target.result;
+                        this.$forceUpdate();
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    event.target.value = '';
+                },
+
+                removerImagem(index) {
+                    this.novoProduto.imagens.splice(index, 1);
+                    this.$forceUpdate();
+                },
+
+                adicionarProduto() {
+                    if (!this.novoProduto.codigo || !this.novoProduto.descricao || !this.novoProduto.preco) {
+                        this.mostrarAlerta('Por favor, preencha os campos obrigatórios: Código, Descrição e Preço!', 'error');
+                        return;
+                    }
+
+                    const produto = {
+                        ...this.novoProduto,
+                        status: 'pendente',
+                        statusTexto: 'Pendente'
+                    };
+
+                    this.produtos.push(produto);
+                    this.mostrarAlerta('Produto adicionado à fila com sucesso!', 'success');
+                    this.limparFormulario();
+                    this.abaAtiva = 'fila';
+                },
+
+                limparFormulario() {
+                    this.novoProduto = this.getNovoProdutoVazio();
+                },
+
+                removerProduto(index) {
+                    this.produtos.splice(index, 1);
+                    this.mostrarAlerta('Produto removido!', 'info');
+                },
+
+                limparTodos() {
+                    if (confirm('Deseja realmente limpar todos os produtos?')) {
+                        this.produtos = [];
+                        this.mostrarAlerta('Todos os produtos foram removidos!', 'info');
+                    }
+                },
+
+                importarCSV(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    Papa.parse(file, {
+                        header: true,
+                        delimiter: ';',
+                        complete: (results) => {
+                            let importados = 0;
+                            results.data.forEach(row => {
+                                if (row['Código'] && row['Descrição'] && row['Preço']) {
+                                    this.produtos.push({
+                                        codigo: row['Código'],
+                                        descricao: row['Descrição'],
+                                        unidade: row['Unidade'] || 'Un',
+                                        situacao: row['Situação'] || 'Ativo',
+                                        preco: parseFloat(row['Preço'].replace(',', '.')) || 0,
+                                        precoCusto: parseFloat(row['Preço de custo']?.replace(',', '.')) || 0,
+                                        precoCompra: parseFloat(row['Preço de Compra']?.replace(',', '.')) || 0,
+                                        estoque: parseFloat(row['Estoque']?.replace(',', '.')) || 0,
+                                        estoqueMinimo: parseFloat(row['Estoque mínimo']?.replace(',', '.')) || 0,
+                                        estoqueMaximo: parseFloat(row['Estoque máximo']?.replace(',', '.')) || 0,
+                                        localizacao: row['Localização'] || '',
+                                        pesoLiquido: parseFloat(row['Peso líquido (Kg)']?.replace(',', '.')) || 0,
+                                        pesoBruto: parseFloat(row['Peso bruto (Kg)']?.replace(',', '.')) || 0,
+                                        largura: parseFloat(row['Largura do produto']?.replace(',', '.')) || 0,
+                                        altura: parseFloat(row['Altura do Produto']?.replace(',', '.')) || 0,
+                                        profundidade: parseFloat(row['Profundidade do produto']?.replace(',', '.')) || 0,
+                                        ncm: row['NCM'] || '',
+                                        origem: row['Origem'] || '0',
+                                        gtinEan: row['GTIN/EAN'] || '',
+                                        marca: row['Marca'] || '',
+                                        fornecedor: row['Fornecedor'] || '',
+                                        categoria: row['Categoria do produto'] || '',
+                                        descricaoCurta: row['Descrição Curta'] || '',
+                                        descricaoComplementar: row['Descrição Complementar'] || '',
+                                        observacoes: row['Observações'] || '',
+                                        imagens: [],
+                                        status: 'pendente',
+                                        statusTexto: 'Pendente'
+                                    });
+                                    importados++;
+                                }
+                            });
+                            this.mostrarAlerta(`${importados} produtos importados do CSV!`, 'success');
+                            this.abaAtiva = 'fila';
+                            event.target.value = '';
+                        },
+                        error: (error) => {
+                            this.mostrarAlerta('Erro ao importar CSV: ' + error.message, 'error');
+                        }
+                    });
+                },
+
+                async enviarProdutos() {
+                    if (this.produtos.length === 0) {
+                        this.mostrarAlerta('Nenhum produto para enviar!', 'error');
+                        return;
+                    }
+
+                    this.carregando = true;
+
+                    const produtosParaEnviar = this.produtos
+                        .filter(p => p.status === 'pendente')
+                        .map(({ status, statusTexto, ...produto }) => produto);
+
+                    try {
+                        const response = await fetch(`${this.apiUrl}/cadastrar-produtos-massa`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ produtos: produtosParaEnviar })
+                        });
+
+                        const resultado = await response.json();
+
+                        resultado.detalhes.forEach(detalhe => {
+                            const produto = this.produtos[detalhe.index];
+                            if (produto) {
+                                produto.status = detalhe.success ? 'sucesso' : 'erro';
+                                produto.statusTexto = detalhe.success ? 'Cadastrado' : 'Erro';
+                            }
+                        });
+
+                        this.mostrarAlerta(
+                            `Processo finalizado! ${resultado.sucessos} sucesso(s), ${resultado.falhas} erro(s)`,
+                            resultado.falhas === 0 ? 'success' : 'error'
+                        );
+
+                    } catch (error) {
+                        this.mostrarAlerta('Erro ao conectar com a API: ' + error.message, 'error');
+                    } finally {
+                        this.carregando = false;
+                    }
+                },
+
+                mostrarAlerta(mensagem, tipo) {
+                    this.alerta.mensagem = mensagem;
+                    this.alerta.tipo = tipo;
+                    this.alerta.mostrar = true;
+
+                    setTimeout(() => {
+                        this.alerta.mostrar = false;
+                    }, 5000);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
