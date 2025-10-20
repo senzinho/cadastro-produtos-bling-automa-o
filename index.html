@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Preços</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        #app {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #41644A;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 25px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon {
+            font-size: 1.3rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #2d3748;
+            transition: all 0.3s;
+        }
+
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #41644A;
+            background: white;
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .slider-value {
+            font-size: 2rem;
+            color: #41644A;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #41644A;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #41644A;
+            cursor: pointer;
+            border: none;
+        }
+
+        .selector {
+            margin-bottom: 20px;
+        }
+
+        .selector label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .selector-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px;
+        }
+
+        .btn-nav {
+            background: white;
+            color: #41644A;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-nav:hover {
+            background: #41644A;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .selector-value {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #2d3748;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #41644A;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card h3 {
+            color: #2d3748;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .chart-container.tall {
+            height: 400px;
+        }
+
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .marketplace-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .marketplace-card:hover {
+            border-color: #41644A;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(65,100,74,0.15);
+        }
+
+        .marketplace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .marketplace-name {
+            font-size: 1.1rem;
+            color: #41644A;
+            font-weight: 600;
+        }
+
+        .marketplace-price {
+            font-size: 1.5rem;
+            color: #2d3748;
+            font-weight: 700;
+        }
+
+        .marketplace-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            color: #718096;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #2d3748;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .kits-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .kit-item {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .kit-name {
+            color: #718096;
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .kit-price {
+            color: #41644A;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .reverse-calc {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .reverse-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .reverse-label {
+            color: #718096;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .reverse-value {
+            color: #41644A;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1400px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .marketplace-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>📊 Calculadora de Preços</h1>
+            <p>Análise comparativa completa com múltiplos gráficos</p>
+        </div>
+
+        <div class="container">
+            <!-- Sidebar com controles -->
+            <div class="sidebar">
+                <div class="card">
+                    <h2><span class="icon">⚙️</span> Parâmetros</h2>
+                    
+                    <div class="input-group">
+                        <label>Custo do Produto (R$)</label>
+                        <input type="number" v-model.number="cost" @input="calculateAllPrices" step="0.01" min="0" placeholder="0.00">
+                    </div>
+
+                    <div class="slider-group">
+                        <label>Margem de Lucro</label>
+                        <div class="slider-value">{{ margin }}%</div>
+                        <input type="range" v-model.number="margin" @input="calculateAllPrices" min="0" max="100" step="1">
+                    </div>
+
+                    <div class="slider-group">
+                        <label>Imposto</label>
+                        <div class="slider-value">{{ taxRate }}%</div>
+                        <input type="range" v-model.number="taxRate" @input="calculateAllPrices" min="0" max="50" step="0.5">
+                    </div>
+
+                    <div class="selector">
+                        <label>Configuração de Kits</label>
+                        <div class="selector-controls">
+                            <button class="btn-nav" @click="prevKit">←</button>
+                            <div class="selector-value">{{ selectedKit.name }}</div>
+                            <button class="btn-nav" @click="nextKit">→</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><span class="icon">🔄</span> Cálculo Reverso</h2>
+                    
+                    <div class="input-group">
+                        <label>Preço de Venda (R$)</label>
+                        <input type="number" v-model.number="price" @input="calculateCost" step="0.01" min="0" placeholder="0.00">
+                    </div>
+
+                    <div class="selector">
+                        <label>Marketplace</label>
+                        <div class="selector-controls">
+                            <button class="btn-nav" @click="prevMarketplace">←</button>
+                            <div class="selector-value">{{ selectedMarketplace.name }}</div>
+                            <button class="btn-nav" @click="nextMarketplace">→</button>
+                        </div>
+                    </div>
+
+                    <div class="reverse-calc" v-if="costResults">
+                        <div class="reverse-result">
+                            <span class="reverse-label">Custo</span>
+                            <span class="reverse-value">R$ {{ costResults.cost }}</span>
+                        </div>
+                        <div class="reverse-result">
+                            <span class="reverse-label">Frete</span>
+                            <span class="reverse-value">R$ {{ costResults.shipment }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conteúdo principal -->
+            <div class="main-content">
+                <!-- Estatísticas resumidas -->
+                <div class="stats-grid" v-if="allPriceResults.length > 0">
+                    <div class="stat-card">
+                        <div class="stat-label">Menor Preço</div>
+                        <div class="stat-value">R$ {{ minPrice }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Maior Preço</div>
+                        <div class="stat-value">R$ {{ maxPrice }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Preço Médio</div>
+                        <div class="stat-value">R$ {{ avgPrice }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Lucro Médio</div>
+                        <div class="stat-value">R$ {{ avgProfit }}</div>
+                    </div>
+                </div>
+
+                <!-- Mensagem de loading -->
+                <div v-else class="card" style="text-align: center; padding: 60px 20px;">
+                    <h2 style="color: #718096; font-weight: 400; margin-bottom: 10px;">⏳ Carregando dados...</h2>
+                    <p style="color: #a0aec0;">Aguarde enquanto calculamos os preços</p>
+                </div>
+
+                <!-- Gráficos de comparação -->
+                <div class="charts-grid" v-if="allPriceResults.length > 0">
+                    <div class="chart-card">
+                        <h3><span class="icon">📊</span> Comparação de Preços</h3>
+                        <div class="chart-container">
+                            <canvas ref="priceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3><span class="icon">🥧</span> Composição do Preço</h3>
+                        <div class="chart-container">
+                            <canvas ref="pieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3><span class="icon">💰</span> Comparação de Lucros</h3>
+                        <div class="chart-container">
+                            <div class="chart-container">
+                            <canvas ref="profitChart"></canvas>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3><span class="icon">📈</span> Comissões vs Impostos</h3>
+                        <div class="chart-container">
+                            <canvas ref="taxesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card full-width">
+                        <h3><span class="icon">📉</span> Composição Detalhada por Marketplace</h3>
+                        <div class="chart-container tall">
+                            <canvas ref="stackedChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card full-width">
+                        <h3><span class="icon">🎯</span> Comparação de Preços dos Kits</h3>
+                        <div class="chart-container">
+                            <canvas ref="kitsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cards dos marketplaces -->
+                <div class="card" v-if="allPriceResults.length > 0">
+                    <h2><span class="icon">🏪</span> Detalhes por Marketplace</h2>
+                    <div class="marketplace-grid">
+                        <div class="marketplace-card" v-for="result in allPriceResults" :key="result.marketplace_id">
+                            <div class="marketplace-header">
+                                <div class="marketplace-name">{{ result.marketplace_name }}</div>
+                                <div class="marketplace-price">R$ {{ result.single_price }}</div>
+                            </div>
+
+                            <div class="marketplace-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Frete</div>
+                                    <div class="detail-value">R$ {{ result.shipment }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Comissão</div>
+                                    <div class="detail-value">R$ {{ result.commission }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Impostos</div>
+                                    <div class="detail-value">R$ {{ result.tax }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Lucro</div>
+                                    <div class="detail-value">R$ {{ result.profit }}</div>
+                                </div>
+                            </div>
+
+                            <div class="kits-row">
+                                <div class="kit-item" v-for="kit in result.kits" :key="kit.name">
+                                    <div class="kit-name">{{ kit.name }}</div>
+                                    <div class="kit-price">R$ {{ kit.price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    cost: 50.00,
+                    price: 98.80,
+                    margin: 20,
+                    taxRate: 10,
+                    marketplaceIndex: 0,
+                    kitIndex: 0,
+                    marketplaces: [],
+                    kits: [],
+                    allPriceResults: [],
+                    costResults: null,
+                    apiUrl: 'http://localhost:5000/api',
+                    charts: {},
+                    updateTimeout: null
+                }
+            },
+            computed: {
+                selectedMarketplace() {
+                    return this.marketplaces[this.marketplaceIndex] || { name: 'Carregando...', commission: 0 };
+                },
+                selectedKit() {
+                    return this.kits[this.kitIndex] || { name: 'Carregando...' };
+                },
+                minPrice() {
+                    if (this.allPriceResults.length === 0) return '0.00';
+                    return Math.min(...this.allPriceResults.map(r => r.single_price)).toFixed(2);
+                },
+                maxPrice() {
+                    if (this.allPriceResults.length === 0) return '0.00';
+                    return Math.max(...this.allPriceResults.map(r => r.single_price)).toFixed(2);
+                },
+                avgPrice() {
+                    if (this.allPriceResults.length === 0) return '0.00';
+                    const sum = this.allPriceResults.reduce((acc, r) => acc + r.single_price, 0);
+                    return (sum / this.allPriceResults.length).toFixed(2);
+                },
+                avgProfit() {
+                    if (this.allPriceResults.length === 0) return '0.00';
+                    const sum = this.allPriceResults.reduce((acc, r) => acc + r.profit, 0);
+                    return (sum / this.allPriceResults.length).toFixed(2);
+                }
+            },
+            methods: {
+                async loadMarketplaces() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/marketplaces`);
+                        this.marketplaces = response.data;
+                        this.calculateAllPrices();
+                        this.calculateCost();
+                    } catch (error) {
+                        console.error('Erro ao carregar marketplaces:', error);
+                    }
+                },
+                async loadKits() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/kits`);
+                        this.kits = response.data;
+                        this.calculateAllPrices();
+                    } catch (error) {
+                        console.error('Erro ao carregar kits:', error);
+                    }
+                },
+                async calculateAllPrices() {
+                    if (this.cost <= 0 || this.marketplaces.length === 0) return;
+                    
+                    try {
+                        const response = await axios.post(`${this.apiUrl}/calculate-all-prices`, {
+                            cost: this.cost,
+                            margin: this.margin,
+                            tax_rate: this.taxRate / 100,
+                            kit_config_id: this.kitIndex
+                        });
+                        this.allPriceResults = response.data.results;
+                        
+                        // Aguarda o Vue processar as mudanças antes de atualizar gráficos
+                        await this.$nextTick();
+                        this.updateCharts();
+                    } catch (error) {
+                        console.error('Erro ao calcular preços:', error);
+                    }
+                },
+                async calculateCost() {
+                    if (this.price <= 0 || this.marketplaces.length === 0) return;
+                    
+                    try {
+                        const response = await axios.post(`${this.apiUrl}/calculate-cost`, {
+                            price: this.price,
+                            margin: this.margin,
+                            tax_rate: this.taxRate / 100,
+                            marketplace_id: this.marketplaceIndex
+                        });
+                        this.costResults = response.data;
+                    } catch (error) {
+                        console.error('Erro ao calcular custo:', error);
+                    }
+                },
+                updateCharts() {
+                    if (this.allPriceResults.length === 0) return;
+
+                    // Cancela timeout anterior se existir
+                    if (this.updateTimeout) {
+                        clearTimeout(this.updateTimeout);
+                        console.log('⏱️ Cancelando atualização anterior (debounce)');
+                    }
+
+                    console.log('⏳ Agendando atualização de gráficos...');
+
+                    // Debounce de 150ms para evitar múltiplas atualizações
+                    this.updateTimeout = setTimeout(() => {
+                        this.renderCharts();
+                    }, 150);
+                },
+                renderCharts() {
+                    // Aguarda o próximo tick do Vue para garantir que o DOM está pronto
+                    this.$nextTick(() => {
+                        // Verifica se todos os refs existem antes de criar gráficos
+                        if (!this.$refs.priceChart || !this.$refs.pieChart || !this.$refs.profitChart ||
+                            !this.$refs.taxesChart || !this.$refs.stackedChart || !this.$refs.kitsChart) {
+                            console.log('Refs ainda não disponíveis, aguardando...');
+                            setTimeout(() => this.renderCharts(), 100);
+                            return;
+                        }
+
+                        console.log('Renderizando gráficos com', this.allPriceResults.length, 'resultados');
+
+                        const labels = this.allPriceResults.map(r => r.marketplace_name);
+                        const prices = this.allPriceResults.map(r => r.single_price);
+                        const profits = this.allPriceResults.map(r => r.profit);
+                        const commissions = this.allPriceResults.map(r => r.commission);
+                        const taxes = this.allPriceResults.map(r => r.tax);
+
+                        const greenShades = [
+                            '#41644A', '#2d4633', '#5a7f63', '#769a7c', '#8fb596',
+                            '#3d5e46', '#4e6f55', '#627f68', '#75907b', '#88a08e'
+                        ];
+
+                    // Gráfico de Preços
+                    try {
+                        if (this.charts.priceChart) {
+                            this.charts.priceChart.destroy();
+                        }
+                        this.charts.priceChart = new Chart(this.$refs.priceChart.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Preço (R$)',
+                                    data: prices,
+                                    backgroundColor: greenShades,
+                                    borderWidth: 0,
+                                    borderRadius: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: '#e2e8f0' }
+                                    },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico de preços:', error);
+                    }
+
+                    // Gráfico de Pizza - Composição (primeiro marketplace como exemplo)
+                    try {
+                        if (this.charts.pieChart) {
+                            this.charts.pieChart.destroy();
+                        }
+                        const firstResult = this.allPriceResults[0];
+                        this.charts.pieChart = new Chart(this.$refs.pieChart.getContext('2d'), {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Custo', 'Lucro', 'Comissão', 'Impostos', 'Frete'],
+                                datasets: [{
+                                    data: [
+                                        this.cost,
+                                        firstResult.profit,
+                                        firstResult.commission,
+                                        firstResult.tax,
+                                        typeof firstResult.shipment === 'number' ? firstResult.shipment : 6
+                                    ],
+                                    backgroundColor: [
+                                        '#41644A',
+                                        '#5a7f63',
+                                        '#769a7c',
+                                        '#8fb596',
+                                        '#a8cfb2'
+                                    ],
+                                    borderWidth: 2,
+                                    borderColor: '#fff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico de pizza:', error);
+                    }
+
+                    // Gráfico de Lucros
+                    try {
+                        if (this.charts.profitChart) {
+                            this.charts.profitChart.destroy();
+                        }
+                        this.charts.profitChart = new Chart(this.$refs.profitChart.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Lucro (R$)',
+                                    data: profits,
+                                    backgroundColor: 'rgba(65, 100, 74, 0.2)',
+                                    borderColor: '#41644A',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.4,
+                                    pointRadius: 5,
+                                    pointBackgroundColor: '#41644A'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: '#e2e8f0' }
+                                    },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico de lucros:', error);
+                    }
+
+                    // Gráfico de Comissões vs Impostos
+                    try {
+                        if (this.charts.taxesChart) {
+                            this.charts.taxesChart.destroy();
+                        }
+                        this.charts.taxesChart = new Chart(this.$refs.taxesChart.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Comissão',
+                                        data: commissions,
+                                        backgroundColor: '#41644A',
+                                        borderRadius: 6
+                                    },
+                                    {
+                                        label: 'Impostos',
+                                        data: taxes,
+                                        backgroundColor: '#769a7c',
+                                        borderRadius: 6
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: '#e2e8f0' }
+                                    },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico de impostos:', error);
+                    }
+
+                    // Gráfico Empilhado - Composição detalhada
+                    try {
+                        if (this.charts.stackedChart) {
+                            this.charts.stackedChart.destroy();
+                        }
+                        this.charts.stackedChart = new Chart(this.$refs.stackedChart.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Custo Base',
+                                        data: this.allPriceResults.map(() => this.cost),
+                                        backgroundColor: '#41644A'
+                                    },
+                                    {
+                                        label: 'Lucro',
+                                        data: profits,
+                                        backgroundColor: '#5a7f63'
+                                    },
+                                    {
+                                        label: 'Comissão',
+                                        data: commissions,
+                                        backgroundColor: '#769a7c'
+                                    },
+                                    {
+                                        label: 'Impostos',
+                                        data: taxes,
+                                        backgroundColor: '#8fb596'
+                                    },
+                                    {
+                                        label: 'Frete',
+                                        data: this.allPriceResults.map(r => typeof r.shipment === 'number' ? r.shipment : 6),
+                                        backgroundColor: '#a8cfb2'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        stacked: true,
+                                        grid: { display: false }
+                                    },
+                                    y: {
+                                        stacked: true,
+                                        grid: { color: '#e2e8f0' }
+                                    }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico empilhado:', error);
+                    }
+
+                    // Gráfico de Kits
+                    try {
+                        if (this.charts.kitsChart) {
+                            this.charts.kitsChart.destroy();
+                        }
+                        const kitsDatasets = this.allPriceResults[0].kits.map((kit, idx) => ({
+                            label: kit.name,
+                            data: this.allPriceResults.map(r => r.kits[idx].price),
+                            borderColor: greenShades[idx],
+                            backgroundColor: greenShades[idx],
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: false
+                        }));
+
+                        this.charts.kitsChart = new Chart(this.$refs.kitsChart.getContext('2d'), {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: kitsDatasets
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: '#e2e8f0' }
+                                    },
+                                    x: { grid: { display: false } }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Erro ao criar gráfico de kits:', error);
+                    }
+
+                    console.log('✅ Todos os gráficos renderizados!');
+                    });
+                },
+                prevMarketplace() {
+                    this.marketplaceIndex = this.marketplaceIndex > 0 ? this.marketplaceIndex - 1 : this.marketplaces.length - 1;
+                    this.calculateCost();
+                },
+                nextMarketplace() {
+                    this.marketplaceIndex = (this.marketplaceIndex + 1) % this.marketplaces.length;
+                    this.calculateCost();
+                },
+                prevKit() {
+                    this.kitIndex = this.kitIndex > 0 ? this.kitIndex - 1 : this.kits.length - 1;
+                    this.calculateAllPrices();
+                },
+                nextKit() {
+                    this.kitIndex = (this.kitIndex + 1) % this.kits.length;
+                    this.calculateAllPrices();
+                }
+            },
+            mounted() {
+                this.loadMarketplaces();
+                this.loadKits();
+            },
+            beforeUnmount() {
+                // Limpa timeout pendente
+                if (this.updateTimeout) {
+                    clearTimeout(this.updateTimeout);
+                }
+                // Limpa todos os gráficos antes de destruir o componente
+                Object.values(this.charts).forEach(chart => {
+                    if (chart) {
+                        try {
+                            chart.destroy();
+                        } catch (error) {
+                            console.error('Erro ao destruir gráfico:', error);
+                        }
+                    }
+                });
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
