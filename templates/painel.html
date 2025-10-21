@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+{% raw %}
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle - Sistema</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.light {
+            background: #f5f7fa;
+            color: #2d3748;
+        }
+
+        body.dark {
+            background: #1a202c;
+            color: #e2e8f0;
+        }
+
+        /* Login Screen */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        body.dark .login-box {
+            background: #2d3748;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        body.dark .form-group input {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        body.dark .error-message {
+            background: #742a2a;
+            color: #fc8181;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 30px 20px;
+        }
+
+        body.dark .sidebar {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .user-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        body.dark .user-info {
+            background: #1a202c;
+        }
+
+        .user-info .name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .user-info .email {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 10px;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: #4a5568;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        body.dark .nav-menu a {
+            color: #a0aec0;
+        }
+
+        .nav-menu a:hover {
+            background: #edf2f7;
+            color: #667eea;
+        }
+
+        body.dark .nav-menu a:hover {
+            background: #4a5568;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: #f56565;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .theme-toggle {
+            padding: 10px 20px;
+            background: #edf2f7;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        body.dark .theme-toggle {
+            background: #4a5568;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark .stat-card {
+            background: #2d3748;
+        }
+
+        .stat-card .label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Users Section */
+        .users-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark .users-section {
+            background: #2d3748;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+        }
+
+        .btn-add {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-add:hover {
+            background: #5568d3;
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        body.dark .search-box input {
+            background: #1a202c;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        /* Users Table */
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        body.dark .users-table th,
+        body.dark .users-table td {
+            border-color: #4a5568;
+        }
+
+        .users-table th {
+            font-weight: 600;
+            color: #718096;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-admin {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .badge-user {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .badge-active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-inactive {
+            background: #e2e8f0;
+            color: #718096;
+        }
+
+        body.dark .badge-admin {
+            background: #742a2a;
+            color: #fc8181;
+        }
+
+        body.dark .badge-user {
+            background: #2c5282;
+            color: #90cdf4;
+        }
+
+        body.dark .badge-active {
+            background: #22543d;
+            color: #9ae6b4;
+        }
+
+        body.dark .badge-inactive {
+            background: #4a5568;
+            color: #cbd5e0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .btn-edit:hover {
+            background: #90cdf4;
+        }
+
+        .btn-delete {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .btn-delete:hover {
+            background: #fc8181;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        body.dark .modal {
+            background: #2d3748;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 12px;
+            background: #e2e8f0;
+            color: #2d3748;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        body.dark .btn-secondary {
+            background: #4a5568;
+            color: #e2e8f0;
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 12px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-save:hover {
+            background: #38a169;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .users-table {
+                font-size: 12px;
+            }
+
+            .users-table th,
+            .users-table td {
+                padding: 10px 5px;
+            }
+        }
+    </style>
+</head>
+<body class="light">
+    <div id="app">
+        <!-- Login Screen -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <div class="login-header">
+                    <h1>🎛️ Painel de Controle</h1>
+                    <p>Área restrita para administradores</p>
+                </div>
+
+                <div v-if="loginError" class="error-message">
+                    {{ loginError }}
+                </div>
+
+                <form @submit.prevent="login">
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input 
+                            type="email" 
+                            v-model="loginForm.email" 
+                            placeholder="admin@sistema.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input 
+                            type="password" 
+                            v-model="loginForm.password" 
+                            placeholder="Digite sua senha"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" :disabled="isLoggingIn">
+                        {{ isLoggingIn ? 'Entrando...' : 'Entrar' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div v-else class="dashboard">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="logo">📊 Sistema</div>
+
+                <div class="user-info">
+                    <div class="name">{{ currentUser.name }}</div>
+                    <div class="email">{{ currentUser.email }}</div>
+                </div>
+
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="#usuarios">👥 Usuários</a></li>
+                        <li><a href="/calculadora">🧮 Calculadora</a></li>
+                        <li><a href="#relatorios">📈 Relatórios</a></li>
+                        <li><a href="#configuracoes">⚙️ Configurações</a></li>
+                    </ul>
+                </nav>
+
+                <button class="btn-logout" @click="logout">
+                    🚪 Sair
+                </button>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="header">
+                    <h1>Painel de Controle</h1>
+                    <button class="theme-toggle" @click="toggleTheme">
+                        {{ isDark ? '☀️' : '🌙' }}
+                    </button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="label">Total de Usuários</div>
+                        <div class="value">{{ users.length }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Administradores</div>
+                        <div class="value">{{ adminCount }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Usuários Ativos</div>
+                        <div class="value">{{ activeCount }}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Usuários Inativos</div>
+                        <div class="value">{{ inactiveCount }}</div>
+                    </div>
+                </div>
+
+                <!-- Users Section -->
+                <div class="users-section">
+                    <div class="section-header">
+                        <h2>Gerenciar Usuários</h2>
+                        <button class="btn-add" @click="openModal()">
+                            ➕ Novo Usuário
+                        </button>
+                    </div>
+
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            v-model="searchQuery" 
+                            placeholder="🔍 Buscar por nome ou e-mail..."
+                        >
+                    </div>
+
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Papel</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="user in filteredUsers" :key="user.id">
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <span class="badge" :class="user.role === 'admin' ? 'badge-admin' : 'badge-user'">
+                                        {{ user.role === 'admin' ? '👑 Admin' : '👤 User' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge" :class="user.active ? 'badge-active' : 'badge-inactive'">
+                                        {{ user.active ? '✅ Ativo' : '❌ Inativo' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-icon btn-edit" @click="openModal(user)">
+                                            ✏️ Editar
+                                        </button>
+                                        <button 
+                                            class="btn-icon btn-delete" 
+                                            @click="deleteUser(user)"
+                                            :disabled="user.id === currentUser.id"
+                                        >
+                                            🗑️ Excluir
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p v-if="filteredUsers.length === 0" style="text-align: center; padding: 40px; color: #718096;">
+                        Nenhum usuário encontrado
+                    </p>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal -->
+        <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>{{ editingUser ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
+                    <button class="btn-close" @click="closeModal">×</button>
+                </div>
+
+                <div v-if="modalError" class="error-message">
+                    {{ modalError }}
+                </div>
+
+                <form @submit.prevent="saveUser">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input 
+                            type="text" 
+                            v-model="userForm.name" 
+                            placeholder="João Silva"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>E-mail</label>
+                        <input 
+                            type="email" 
+                            v-model="userForm.email" 
+                            placeholder="joao@exemplo.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Senha {{ editingUser ? '(deixe em branco para não alterar)' : '' }}</label>
+                        <input 
+                            type="password" 
+                            v-model="userForm.password" 
+                            placeholder="Digite a senha"
+                            :required="!editingUser"
+                        >
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Papel</label>
+                            <select v-model="userForm.role" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;">
+                                <option value="user">👤 Usuário</option>
+                                <option value="admin">👑 Administrador</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <div class="checkbox-group">
+                                <input 
+                                    type="checkbox" 
+                                    id="active" 
+                                    v-model="userForm.active"
+                                >
+                                <label for="active" style="margin: 0; cursor: pointer;">Usuário Ativo</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" @click="closeModal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn-save">
+                            💾 Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isDark: false,
+                    isLoggedIn: false,
+                    isLoggingIn: false,
+                    currentUser: null,
+                    loginForm: {
+                        email: '',
+                        password: ''
+                    },
+                    loginError: '',
+                    users: [],
+                    searchQuery: '',
+                    showModal: false,
+                    editingUser: null,
+                    userForm: {
+                        name: '',
+                        email: '',
+                        password: '',
+                        role: 'user',
+                        active: true
+                    },
+                    modalError: '',
+                    apiUrl: 'http://localhost:5000/api'
+                }
+            },
+            computed: {
+                filteredUsers() {
+                    if (!this.searchQuery) return this.users;
+                    
+                    const query = this.searchQuery.toLowerCase();
+                    return this.users.filter(user => 
+                        user.name.toLowerCase().includes(query) ||
+                        user.email.toLowerCase().includes(query)
+                    );
+                },
+                adminCount() {
+                    return this.users.filter(u => u.role === 'admin').length;
+                },
+                activeCount() {
+                    return this.users.filter(u => u.active).length;
+                },
+                inactiveCount() {
+                    return this.users.filter(u => !u.active).length;
+                }
+            },
+            methods: {
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    document.body.className = this.isDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                },
+                loadTheme() {
+                    const savedTheme = localStorage.getItem('theme');
+                    if (savedTheme) {
+                        this.isDark = savedTheme === 'dark';
+                    } else {
+                        this.isDark = false;
+                    }
+                    document.body.className = this.isDark ? 'dark' : 'light';
+                },
+                async login() {
+                    this.isLoggingIn = true;
+                    this.loginError = '';
+
+                    try {
+                        const response = await axios.post(`${this.apiUrl}/login`, {
+                            email: this.loginForm.email,
+                            password: this.loginForm.password
+                        }, {
+                            withCredentials: true
+                        });
+
+                        const user = response.data.user;
+
+                        if (user.role !== 'admin') {
+                            this.loginError = 'Acesso negado. Apenas administradores podem acessar o painel.';
+                            await axios.post(`${this.apiUrl}/logout`, {}, { withCredentials: true });
+                            return;
+                        }
+
+                        this.currentUser = user;
+                        this.isLoggedIn = true;
+                        
+                        await this.loadUsers();
+
+                    } catch (error) {
+                        console.error('Erro no login:', error);
+                        if (error.response) {
+                            this.loginError = error.response.data.error || 'Erro ao fazer login';
+                        } else {
+                            this.loginError = 'Erro ao conectar com o servidor.';
+                        }
+                    } finally {
+                        this.isLoggingIn = false;
+                    }
+                },
+                async logout() {
+                    try {
+                        await axios.post(`${this.apiUrl}/logout`, {}, {
+                            withCredentials: true
+                        });
+                    } catch (error) {
+                        console.error('Erro no logout:', error);
+                    }
+                    
+                    this.isLoggedIn = false;
+                    this.currentUser = null;
+                    this.loginForm = { email: '', password: '' };
+                },
+                async loadUsers() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/users`, {
+                            withCredentials: true
+                        });
+                        this.users = response.data;
+                        console.log('✅ Usuários carregados:', this.users.length);
+                    } catch (error) {
+                        console.error('❌ Erro ao carregar usuários:', error);
+                        if (error.response && error.response.status === 401) {
+                            this.logout();
+                        }
+                    }
+                },
+                openModal(user = null) {
+                    this.editingUser = user;
+                    this.modalError = '';
+                    
+                    if (user) {
+                        this.userForm = {
+                            name: user.name,
+                            email: user.email,
+                            password: '',
+                            role: user.role,
+                            active: user.active
+                        };
+                    } else {
+                        this.userForm = {
+                            name: '',
+                            email: '',
+                            password: '',
+                            role: 'user',
+                            active: true
+                        };
+                    }
+                    
+                    this.showModal = true;
+                },
+                closeModal() {
+                    this.showModal = false;
+                    this.editingUser = null;
+                    this.modalError = '';
+                },
+                async saveUser() {
+                    this.modalError = '';
+
+                    try {
+                        if (this.editingUser) {
+                            const updateData = {
+                                name: this.userForm.name,
+                                email: this.userForm.email,
+                                role: this.userForm.role,
+                                active: this.userForm.active
+                            };
+
+                            if (this.userForm.password) {
+                                updateData.password = this.userForm.password;
+                            }
+
+                            await axios.put(
+                                `${this.apiUrl}/users/${this.editingUser.id}`, 
+                                updateData,
+                                { withCredentials: true }
+                            );
+
+                            console.log('✅ Usuário atualizado!');
+                        } else {
+                            if (!this.userForm.password) {
+                                this.modalError = 'A senha é obrigatória para novos usuários.';
+                                return;
+                            }
+
+                            await axios.post(
+                                `${this.apiUrl}/users`, 
+                                this.userForm,
+                                { withCredentials: true }
+                            );
+
+                            console.log('✅ Usuário criado!');
+                        }
+
+                        await this.loadUsers();
+                        this.closeModal();
+
+                    } catch (error) {
+                        console.error('❌ Erro ao salvar usuário:', error);
+                        if (error.response) {
+                            this.modalError = error.response.data.error || 'Erro ao salvar usuário';
+                        } else {
+                            this.modalError = 'Erro ao conectar com o servidor';
+                        }
+                    }
+                },
+                async deleteUser(user) {
+                    if (user.id === this.currentUser.id) {
+                        alert('Você não pode excluir sua própria conta!');
+                        return;
+                    }
+
+                    if (confirm(`Tem certeza que deseja excluir o usuário ${user.name}?`)) {
+                        try {
+                            await axios.delete(`${this.apiUrl}/users/${user.id}`, {
+                                withCredentials: true
+                            });
+
+                            console.log('✅ Usuário excluído!');
+                            await this.loadUsers();
+
+                        } catch (error) {
+                            console.error('❌ Erro ao excluir usuário:', error);
+                            if (error.response) {
+                                alert(error.response.data.error || 'Erro ao excluir usuário');
+                            } else {
+                                alert('Erro ao conectar com o servidor');
+                            }
+                        }
+                    }
+                },
+                async checkSession() {
+                    try {
+                        const response = await axios.get(`${this.apiUrl}/me`, {
+                            withCredentials: true
+                        });
+                        
+                        const user = response.data;
+                        
+                        if (user.role !== 'admin') {
+                            window.location.href = '/calculadora';
+                            return;
+                        }
+                        
+                        this.currentUser = user;
+                        this.isLoggedIn = true;
+                        await this.loadUsers();
+                        
+                    } catch (error) {
+                        console.log('Não autenticado');
+                    }
+                }
+            },
+            async mounted() {
+                this.loadTheme();
+                await this.checkSession();
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+{% endraw %}
