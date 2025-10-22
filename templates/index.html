@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="static/logo.jpeg" type="image/x-icon">
     <title>Calculadora de Preços</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
@@ -2059,24 +2060,48 @@
             const list = document.getElementById('marketplace-list');
             list.innerHTML = '';
             
-            // Agrupar Mercado Livre se ambos estiverem selecionados
+            // Agrupar Mercado Livre, Tray e Shopee em um quadro especial
             const mlResults = filteredResults.filter(r => r.marketplace_name.includes('Mercado Livre'));
-            const otherResults = filteredResults.filter(r => !r.marketplace_name.includes('Mercado Livre'));
+            const trayResults = filteredResults.filter(r => r.marketplace_name.includes('Tray'));
+            const shopeeResults = filteredResults.filter(r => r.marketplace_name.includes('Shopee'));
+            const otherResults = filteredResults.filter(r => 
+                !r.marketplace_name.includes('Mercado Livre') && 
+                !r.marketplace_name.includes('Tray') && 
+                !r.marketplace_name.includes('Shopee')
+            );
             
-            if (mlResults.length > 0) {
-                const mlGroupDiv = document.createElement('div');
-                mlGroupDiv.className = 'marketplace-results-group';
+            // Criar grupo dos principais marketplaces
+            const mainResults = [...mlResults, ...trayResults, ...shopeeResults];
+            
+            if (mainResults.length > 0) {
+                const mainGroupDiv = document.createElement('div');
+                mainGroupDiv.className = 'marketplace-results-group';
                 
-                const mlTitle = document.createElement('div');
-                mlTitle.className = 'marketplace-results-group-title';
-                mlTitle.textContent = '📦 Mercado Livre';
-                mlGroupDiv.appendChild(mlTitle);
+                const mainTitle = document.createElement('div');
+                mainTitle.className = 'marketplace-results-group-title';
+                mainTitle.textContent = '🏆 Principais Marketplaces';
+                mainGroupDiv.appendChild(mainTitle);
                 
+                // Renderizar em ordem: Mercado Livre, Tray, Shopee
                 mlResults.forEach((result) => {
-                    mlGroupDiv.appendChild(createMarketplaceRow(result));
+                    const row = createMarketplaceRow(result);
+                    row.style.borderLeft = '4px solid #FFB100';
+                    mainGroupDiv.appendChild(row);
                 });
                 
-                list.appendChild(mlGroupDiv);
+                trayResults.forEach((result) => {
+                    const row = createMarketplaceRow(result);
+                    row.style.borderLeft = '4px solid #FF7A00';
+                    mainGroupDiv.appendChild(row);
+                });
+                
+                shopeeResults.forEach((result) => {
+                    const row = createMarketplaceRow(result);
+                    row.style.borderLeft = '4px solid #EE4D2D';
+                    mainGroupDiv.appendChild(row);
+                });
+                
+                list.appendChild(mainGroupDiv);
             }
             
             otherResults.forEach((result) => {
