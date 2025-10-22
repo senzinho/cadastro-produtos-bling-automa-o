@@ -230,16 +230,17 @@ def init_database():
         
         if Marketplace.query.count() == 0:
             marketplaces = [
-                Marketplace(name="Mercado Livre", commission=0.12),
-                Marketplace(name="Americanas", commission=0.16),
-                Marketplace(name="Magalu", commission=0.18),
-                Marketplace(name="Via Varejo", commission=0.17),
-                Marketplace(name="Droga Raia", commission=0.22),
-                Marketplace(name="Tray", commission=0.05),
-                Marketplace(name="Tray + 20%", commission=0.05),
-                Marketplace(name="Digigrow", commission=0.18),
-                Marketplace(name="Shopee", commission=0.20),
-                Marketplace(name="Shopee x2", commission=0.20)
+                Marketplace(name="Mercado Livre Premium", commission=0.17),  # ID 1 (index 0) - 17%
+                Marketplace(name="Mercado Livre Clássico", commission=0.12), # ID 2 (index 1) - 12%
+                Marketplace(name="Americanas", commission=0.16),              # ID 3 (index 2)
+                Marketplace(name="Magalu", commission=0.18),                  # ID 4 (index 3)
+                Marketplace(name="Via Varejo", commission=0.17),              # ID 5 (index 4)
+                Marketplace(name="Droga Raia", commission=0.22),              # ID 6 (index 5)
+                Marketplace(name="Tray", commission=0.05),                    # ID 7 (index 6)
+                Marketplace(name="Tray + 20%", commission=0.05),              # ID 8 (index 7)
+                Marketplace(name="Digigrow", commission=0.18),                # ID 9 (index 8)
+                Marketplace(name="Shopee", commission=0.20),                  # ID 10 (index 9)
+                Marketplace(name="Shopee x2", commission=0.20)                # ID 11 (index 10)
             ]
             
             for mp in marketplaces:
@@ -247,6 +248,11 @@ def init_database():
             
             db.session.commit()
             print('✅ Marketplaces criados!')
+            print('   • Mercado Livre Premium: ID 1 (index 0) - 17% - Frete 7/27')
+            print('   • Mercado Livre Clássico: ID 2 (index 1) - 12% - Frete 7/27')
+            print('   • Americanas: ID 3 (index 2) - Frete 7/27')
+            print('   • Magalu: ID 4 (index 3) - Frete 7/27')
+            print('   • Via Varejo: ID 5 (index 4) - Frete 7/27')
         
         if KitConfig.query.count() == 0:
             kit_configs = [
@@ -291,17 +297,28 @@ def init_database():
             print('✅ Configurações de kits criadas!')
 
 def get_shipment_value(marketplace_db_id, price=0):
-    """Calcula o valor do frete baseado no marketplace e preço"""
+    """
+    Calcula o valor do frete baseado no marketplace e preço
+    
+    ATUALIZADO:
+    - IDs 1-5 (Mercado Livre Premium, Mercado Livre Clássico, Americanas, Magalu, Via Varejo): 
+      Frete 7.00 ou 27.00 (baseado no preço >= 78)
+    - IDs 6-9 (Droga Raia, Tray, Tray + 20%, Digigrow): Frete fixo 1.00
+    - IDs 10-11 (Shopee, Shopee x2): Frete fixo 4.50
+    """
     marketplace_id = marketplace_db_id - 1
     
-    if marketplace_id >= 4 and marketplace_id <= 7:
+    # Droga Raia, Tray, Tray + 20%, Digigrow (IDs 6-9, indices 5-8)
+    if marketplace_id >= 5 and marketplace_id <= 8:
         return 1.0
-    elif marketplace_id in [8, 9]:
+    # Shopee, Shopee x2 (IDs 10-11, indices 9-10)
+    elif marketplace_id in [9, 10]:
         return 4.5
+    # Mercado Livre Premium, Mercado Livre Clássico, Americanas, Magalu, Via Varejo (IDs 1-5, indices 0-4)
     else:
         if price >= 78:
-            return 22.0
-        return 6.0
+            return 27.0  # ATUALIZADO: era 22.0
+        return 7.0       # ATUALIZADO: era 6.0
 
 def calculate_price(cost, margin, marketplace_db_id, tax_rate, kit_amt=1):
     """Calcula o preço de venda baseado no custo"""
@@ -315,13 +332,16 @@ def calculate_price(cost, margin, marketplace_db_id, tax_rate, kit_amt=1):
     shipment = get_shipment_value(marketplace_db_id, 0)
     price = ((cost * (margin * 0.01 + 1) * kit_amt) + shipment) / (1 - (commission + tax_rate))
     
-    if marketplace_id <= 3 and price >= 78:
-        shipment = 22.0
+    # Recalcula se preço >= 78 para os primeiros marketplaces (índices 0-4)
+    if marketplace_id <= 4 and price >= 78:
+        shipment = 27.0  # ATUALIZADO: era 22.0
         price = ((cost * (margin * 0.01 + 1) * kit_amt) + shipment) / (1 - (commission + tax_rate))
     
-    if marketplace_id == 9:
+    # Shopee x2 (ID 11, índice 10)
+    if marketplace_id == 10:
         price *= 2
-    elif marketplace_id == 6:
+    # Tray + 20% (ID 8, índice 7)
+    elif marketplace_id == 7:
         price = ((price / (1 - 0.10)) / (1 - 0.10))
     
     return price, shipment
@@ -338,8 +358,9 @@ def calculate_cost_value(price, margin, marketplace_db_id, tax_rate):
     shipment = get_shipment_value(marketplace_db_id, 0)
     cost = (price - (price * (commission + tax_rate)) - shipment) / (1 + margin * 0.01)
     
-    if marketplace_id <= 3 and price >= 78:
-        shipment = 22.0
+    # Recalcula se preço >= 78 para os primeiros marketplaces (índices 0-4)
+    if marketplace_id <= 4 and price >= 78:
+        shipment = 27.0  # ATUALIZADO: era 22.0
         cost = (price - (price * (commission + tax_rate)) - shipment) / (1 + margin * 0.01)
     
     return cost, shipment
@@ -484,6 +505,22 @@ def test():
                 color: #c53030;
                 font-family: 'Courier New', monospace;
             }
+            .update {
+                background: #c6f6d5;
+                border: 2px solid #48bb78;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+            .update h4 {
+                color: #22543d;
+                margin-bottom: 8px;
+            }
+            .update ul {
+                text-align: left;
+                color: #22543d;
+                margin-left: 20px;
+            }
         </style>
     </head>
     <body>
@@ -491,6 +528,15 @@ def test():
             <div class="emoji">🚀</div>
             <h1>Sistema Online!</h1>
             <div class="status">✅ Flask Funcionando Perfeitamente</div>
+            
+            <div class="update">
+                <h4>🆕 Atualizações Recentes:</h4>
+                <ul>
+                    <li>✅ Frete alterado: 7/27 (antes era 6/22)</li>
+                    <li>✅ Novo: Mercado Livre Clássico (12%)</li>
+                    <li>✅ Afeta: ML Premium, ML Clássico, Americanas, Magalu, Via Varejo</li>
+                </ul>
+            </div>
             
             <ul class="links">
                 <li><a href="/login">🔐 Login</a></li>
@@ -601,26 +647,94 @@ def get_users():
 @admin_required
 def create_user():
     try:
+        # Log da requisição bruta
+        print(f'🔍 Content-Type: {request.content_type}')
+        print(f'🔍 Raw data: {request.get_data()}')
+        
         data = request.json
+        print(f'🔍 Dados JSON parseados: {data}')
+        print(f'🔍 Tipo dos dados: {type(data)}')
         
-        if not data.get('name') or not data.get('email') or not data.get('password'):
-            return jsonify({"error": "Nome, email e senha são obrigatórios"}), 400
+        if data is None:
+            print('❌ Nenhum JSON recebido')
+            return jsonify({"error": "Dados JSON inválidos ou não enviados"}), 400
         
-        if User.query.filter_by(email=data['email']).first():
-            return jsonify({"error": "Email já cadastrado"}), 400
+        # Validação detalhada de cada campo
+        name = data.get('name')
+        email = data.get('email')  
+        password = data.get('password')
+        
+        print(f'🔍 name: "{name}" (tipo: {type(name)}, bool: {bool(name)})')
+        print(f'🔍 email: "{email}" (tipo: {type(email)}, bool: {bool(email)})')
+        print(f'🔍 password: "{password}" (tipo: {type(password)}, bool: {bool(password)})')
+        
+        # Verificação específica de campos vazios
+        if not name:
+            print('❌ Nome está vazio, nulo ou é string vazia')
+            return jsonify({"error": "Nome é obrigatório e não pode estar vazio"}), 400
+            
+        if not email:
+            print('❌ Email está vazio, nulo ou é string vazia')
+            return jsonify({"error": "Email é obrigatório e não pode estar vazio"}), 400
+            
+        if not password:
+            print('❌ Senha está vazia, nula ou é string vazia')
+            return jsonify({"error": "Senha é obrigatória e não pode estar vazia"}), 400
+        
+        # Trim dos campos de texto para remover espaços
+        name = name.strip() if isinstance(name, str) else name
+        email = email.strip() if isinstance(email, str) else email
+        
+        print(f'🔍 Campos após trim - name: "{name}", email: "{email}"')
+        
+        # Verificar se ainda são válidos após trim
+        if not name or not email:
+            print('❌ Nome ou email ficaram vazios após remover espaços')
+            return jsonify({"error": "Nome e email não podem conter apenas espaços"}), 400
+        
+        # Verificar se email já existe
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            print(f'❌ Email {email} já existe no banco (ID: {existing_user.id})')
+            return jsonify({"error": f"Email '{email}' já está cadastrado"}), 400
+        
+        # Processar role e active
+        role = data.get('role', 'user')
+        active = data.get('active', True)
+        
+        print(f'🔍 role: "{role}" (tipo: {type(role)})')
+        print(f'🔍 active: "{active}" (tipo: {type(active)})')
+        
+        # Converter active para boolean se vier como string
+        if isinstance(active, str):
+            active = active.lower() in ('true', '1', 'yes', 'sim')
+            print(f'🔍 active convertido para boolean: {active}')
+        
+        # Criar usuário
+        print(f'🔍 Criando usuário com dados finais:')
+        print(f'   name: "{name}"')
+        print(f'   email: "{email}"')
+        print(f'   password: [REDACTED] (length: {len(password)})')
+        print(f'   role: "{role}"')
+        print(f'   active: {active}')
         
         user = User(
-            name=data['name'],
-            email=data['email'],
-            password=generate_password_hash(data['password']),
-            role=data.get('role', 'user'),
-            active=data.get('active', True)
+            name=name,
+            email=email,
+            password=generate_password_hash(password),
+            role=role,
+            active=active
         )
         
-        db.session.add(user)
-        db.session.commit()
+        print(f'🔍 Objeto User criado: {user}')
         
-        print(f'✅ Usuário criado: {user.email} (ID: {user.id}, Role: {user.role})')
+        db.session.add(user)
+        print(f'🔍 User adicionado à sessão')
+        
+        db.session.commit()
+        print(f'🔍 Commit realizado')
+        
+        print(f'✅ Usuário criado com sucesso: {user.email} (ID: {user.id}, Role: {user.role})')
         
         return jsonify({
             "message": "Usuário criado com sucesso",
@@ -629,8 +743,19 @@ def create_user():
     
     except Exception as e:
         db.session.rollback()
-        print(f'❌ Erro ao criar usuário: {str(e)}')
-        return jsonify({"error": "Erro ao criar usuário"}), 500
+        print(f'❌ Erro detalhado na criação do usuário:')
+        print(f'   Tipo do erro: {type(e).__name__}')
+        print(f'   Mensagem: {str(e)}')
+        
+        # Log do traceback completo
+        import traceback
+        print(f'❌ Traceback completo:')
+        traceback.print_exc()
+        
+        return jsonify({
+            "error": f"Erro interno do servidor: {str(e)}",
+            "type": type(e).__name__
+        }), 500
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
 @admin_required
@@ -758,12 +883,19 @@ def calculate_all_prices():
                     "price": round(kit_price, 2)
                 })
             
+            # Determina a mensagem do frete baseado no marketplace_id
+            marketplace_id = marketplace.id - 1
+            if marketplace_id <= 4:  # ML Premium, ML Clássico, Americanas, Magalu, Via Varejo
+                shipment_display = "7.00 ou 27.00"
+            else:
+                shipment_display = str(shipment)
+            
             all_results.append({
                 "marketplace_id": marketplace.id - 1,
                 "marketplace_name": marketplace.name,
                 "single_price": round(single_price, 2),
                 "kits": kits_prices,
-                "shipment": shipment if (marketplace.id - 1) > 3 else "6.00 ou 22.00",
+                "shipment": shipment_display,
                 "commission": round(only_commission, 2),
                 "tax": round(only_tax, 2),
                 "profit": round(profit, 2)
@@ -787,6 +919,7 @@ def calculate_all_prices():
     
     except Exception as e:
         print(f'❌ Erro ao calcular preços: {str(e)}')
+        traceback.print_exc()
         return jsonify({"error": "Erro ao calcular preços"}), 500
 
 @app.route('/api/calculate-cost', methods=['POST'])
@@ -832,6 +965,7 @@ def calculate_cost_endpoint():
     
     except Exception as e:
         print(f'❌ Erro ao calcular custo: {str(e)}')
+        traceback.print_exc()
         return jsonify({"error": "Erro ao calcular custo"}), 500
 
 # ==================== ROTAS DE HISTÓRICO ====================
@@ -882,6 +1016,19 @@ if __name__ == '__main__':
     print('   • Calculadora requer login (user ou admin)')
     print('   • Painel requer login como admin')
     print('   • Usuários inativos são automaticamente deslogados')
+    print('')
+    print('📦 Marketplaces (ATUALIZADO):')
+    print('   ✅ Mercado Livre Premium - 17% - Frete 7/27')
+    print('   ✅ Mercado Livre Clássico - 12% - Frete 7/27 (NOVO)')
+    print('   ✅ Americanas - Frete 7/27')
+    print('   ✅ Magalu - Frete 7/27')
+    print('   ✅ Via Varejo - Frete 7/27')
+    print('   • Droga Raia - Frete 1.00')
+    print('   • Tray - Frete 1.00')
+    print('   • Tray + 20% - Frete 1.00')
+    print('   • Digigrow - Frete 1.00')
+    print('   • Shopee - Frete 4.50')
+    print('   • Shopee x2 - Frete 4.50')
     print('')
     print('📊 Banco de Dados: controle_acessos')
     print('👤 Credenciais Padrão:')
