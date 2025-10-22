@@ -299,27 +299,23 @@ def init_database():
 def get_shipment_value(marketplace_db_id, price=0):
     """
     Calcula o valor do frete baseado no marketplace e preço
-    
-    ATUALIZADO:
-    - IDs 1-5 (Mercado Livre Premium, Mercado Livre Clássico, Americanas, Magalu, Via Varejo): 
-      Frete 7.00 ou 27.00 (baseado no preço >= 78)
-    - IDs 6-9 (Droga Raia, Tray, Tray + 20%, Digigrow): Frete fixo 1.00
-    - IDs 10-11 (Shopee, Shopee x2): Frete fixo 4.50
     """
     marketplace_id = marketplace_db_id - 1
     
-    # Droga Raia, Tray, Tray + 20%, Digigrow (IDs 6-9, indices 5-8)
-    if marketplace_id >= 5 and marketplace_id <= 8:
+    # Droga Raia, Tray, Tray + 20%, Digigrow (IDs 6-8, indices 5-7)
+    if marketplace_id >= 5 and marketplace_id <= 7:
         return 1.0
-    # Shopee, Shopee x2 (IDs 10-11, indices 9-10)
-    elif marketplace_id in [9, 10]:
+    
+    # Shopee, Shopee x2 (IDs 9-10, indices 8-9) ✅ ATUALIZADO
+    elif marketplace_id in [8, 9]:
         return 4.5
-    # Mercado Livre Premium, Mercado Livre Clássico, Americanas, Magalu, Via Varejo (IDs 1-5, indices 0-4)
+    
+    # Mercado Livre Premium, ML Clássico, Americanas, Magalu, Via Varejo (IDs 1-5, indices 0-4)
     else:
         if price >= 78:
-            return 27.0  # ATUALIZADO: era 22.0
-        return 7.0       # ATUALIZADO: era 6.0
-
+            return 27.0
+        return 7.0
+    
 def calculate_price(cost, margin, marketplace_db_id, tax_rate, kit_amt=1):
     """Calcula o preço de venda baseado no custo"""
     marketplace = Marketplace.query.get(marketplace_db_id)

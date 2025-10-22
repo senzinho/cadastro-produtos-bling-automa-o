@@ -1371,7 +1371,9 @@
             isDark: false,
             apiUrl: 'http://localhost:5000/api',
             debounceTimer: null,
-            mlGroupExpanded: true // Estado do grupo Mercado Livre
+            mlGroupExpanded: true,        // Estado do grupo Mercado Livre
+            shopeeGroupExpanded: true,    // ✅ NOVO - Shopee
+            trayGroupExpanded: true       // ✅ NOVO - Tray
         };
 
         // ==================== AUTENTICAÇÃO ====================
@@ -1474,10 +1476,10 @@
         function renderMarketplacesList() {
             const container = document.getElementById('marketplace-list-selector');
             container.innerHTML = '';
-            
-            // Criar grupo Mercado Livre
+
+            // ==================== GRUPO MERCADO LIVRE ====================
             const mlGroup = document.createElement('div');
-            mlGroup.className = 'marketplace-group' + (state.mlGroupExpanded ? ' expanded' : '');
+            mlGroup.className = 'marketplace-group expanded';
             
             const mlHeader = document.createElement('div');
             mlHeader.className = 'marketplace-group-header';
@@ -1485,14 +1487,13 @@
                 <svg class="group-expand-icon" viewBox="0 0 24 24">
                     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
                 </svg>
-                <span style="flex: 1;">📦 Mercado Livre</span>
                 <input 
                     type="checkbox" 
                     class="marketplace-checkbox"
                     id="ml-group-checkbox"
                     ${isMercadoLivreGroupSelected() ? 'checked' : ''}
-                    onclick="event.stopPropagation()"
                 >
+                <span style="flex: 1; margin-left: 5px;">📦 Mercado Livre</span>
             `;
             
             mlHeader.addEventListener('click', (e) => {
@@ -1508,8 +1509,7 @@
             const mlItems = document.createElement('div');
             mlItems.className = 'marketplace-group-items';
             
-            // Adicionar Premium e Clássico ao grupo
-            const mlMarketplaces = state.marketplaces.filter((mp, idx) => 
+            const mlMarketplaces = state.marketplaces.filter((mp) => 
                 mp.name.includes('Mercado Livre')
             );
             
@@ -1545,10 +1545,150 @@
             mlGroup.appendChild(mlHeader);
             mlGroup.appendChild(mlItems);
             container.appendChild(mlGroup);
+
+            // ==================== GRUPO SHOPEE ====================
+            const shopeeGroup = document.createElement('div');
+            shopeeGroup.className = 'marketplace-group expanded';
             
-            // Adicionar outros marketplaces
+            const shopeeHeader = document.createElement('div');
+            shopeeHeader.className = 'marketplace-group-header';
+            shopeeHeader.innerHTML = `
+                <svg class="group-expand-icon" viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+                <input 
+                    type="checkbox" 
+                    class="marketplace-checkbox"
+                    id="shopee-group-checkbox"
+                    ${isShopeeGroupSelected() ? 'checked' : ''}
+                >
+                <span style="flex: 1; margin-left: 5px;">🛍️ Shopee</span>
+            `;
+            
+            shopeeHeader.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') {
+                    toggleShopeeGroup();
+                }
+            });
+            
+            shopeeHeader.querySelector('input').addEventListener('change', (e) => {
+                toggleShopeeGroupSelection();
+            });
+            
+            const shopeeItems = document.createElement('div');
+            shopeeItems.className = 'marketplace-group-items';
+            
+            const shopeeMarketplaces = state.marketplaces.filter((mp) => 
+                mp.name.includes('Shopee')
+            );
+            
+            shopeeMarketplaces.forEach((mp) => {
+                const index = state.marketplaces.findIndex(m => m.name === mp.name);
+                const div = document.createElement('div');
+                div.className = 'marketplace-item';
+                div.innerHTML = `
+                    <input 
+                        type="checkbox" 
+                        class="marketplace-checkbox"
+                        id="mp-${index}"
+                        ${state.selectedMarketplaces.includes(index) ? 'checked' : ''}
+                    >
+                    <span class="marketplace-item-name">${mp.name.replace('Shopee', '').trim() || 'Shopee Padrão'}</span>
+                    <span class="marketplace-commission">${(mp.commission * 100).toFixed(0)}%</span>
+                `;
+                
+                div.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        document.getElementById(`mp-${index}`).click();
+                    }
+                });
+                
+                div.querySelector('input').addEventListener('change', () => {
+                    toggleMarketplace(index);
+                    updateShopeeGroupCheckbox();
+                });
+                
+                shopeeItems.appendChild(div);
+            });
+            
+            shopeeGroup.appendChild(shopeeHeader);
+            shopeeGroup.appendChild(shopeeItems);
+            container.appendChild(shopeeGroup);
+
+            // ==================== GRUPO TRAY ====================
+            const trayGroup = document.createElement('div');
+            trayGroup.className = 'marketplace-group expanded';
+            
+            const trayHeader = document.createElement('div');
+            trayHeader.className = 'marketplace-group-header';
+            trayHeader.innerHTML = `
+                <svg class="group-expand-icon" viewBox="0 0 24 24">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+                <input 
+                    type="checkbox" 
+                    class="marketplace-checkbox"
+                    id="tray-group-checkbox"
+                    ${isTrayGroupSelected() ? 'checked' : ''}
+                >
+                <span style="flex: 1; margin-left: 5px;">🏪 Tray</span>
+            `;
+            
+            trayHeader.addEventListener('click', (e) => {
+                if (e.target.type !== 'checkbox') {
+                    toggleTrayGroup();
+                }
+            });
+            
+            trayHeader.querySelector('input').addEventListener('change', (e) => {
+                toggleTrayGroupSelection();
+            });
+            
+            const trayItems = document.createElement('div');
+            trayItems.className = 'marketplace-group-items';
+            
+            const trayMarketplaces = state.marketplaces.filter((mp) => 
+                mp.name.includes('Tray')
+            );
+            
+            trayMarketplaces.forEach((mp) => {
+                const index = state.marketplaces.findIndex(m => m.name === mp.name);
+                const div = document.createElement('div');
+                div.className = 'marketplace-item';
+                div.innerHTML = `
+                    <input 
+                        type="checkbox" 
+                        class="marketplace-checkbox"
+                        id="mp-${index}"
+                        ${state.selectedMarketplaces.includes(index) ? 'checked' : ''}
+                    >
+                    <span class="marketplace-item-name">${mp.name.replace('Tray', '').trim() || 'Tray Padrão'}</span>
+                    <span class="marketplace-commission">${(mp.commission * 100).toFixed(0)}%</span>
+                `;
+                
+                div.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        document.getElementById(`mp-${index}`).click();
+                    }
+                });
+                
+                div.querySelector('input').addEventListener('change', () => {
+                    toggleMarketplace(index);
+                    updateTrayGroupCheckbox();
+                });
+                
+                trayItems.appendChild(div);
+            });
+            
+            trayGroup.appendChild(trayHeader);
+            trayGroup.appendChild(trayItems);
+            container.appendChild(trayGroup);
+
+            // ==================== OUTROS MARKETPLACES ====================
             state.marketplaces.forEach((mp, index) => {
-                if (mp.name.includes('Mercado Livre')) return; // Já adicionado no grupo
+                if (mp.name.includes('Mercado Livre') || mp.name.includes('Shopee') || mp.name.includes('Tray')) {
+                    return; // Já adicionados nos grupos
+                }
                 
                 const div = document.createElement('div');
                 div.className = 'marketplace-item';
@@ -1626,6 +1766,106 @@
             const checkbox = document.getElementById('ml-group-checkbox');
             if (checkbox) {
                 checkbox.checked = isMercadoLivreGroupSelected();
+            }
+        }
+
+        // ==================== FUNÇÕES PARA SHOPEE ====================
+
+        function toggleShopeeGroup() {
+            state.shopeeGroupExpanded = !state.shopeeGroupExpanded;
+            const groups = document.querySelectorAll('.marketplace-group');
+            if (groups[1]) {
+                groups[1].classList.toggle('expanded');
+            }
+        }
+
+        function isShopeeGroupSelected() {
+            const shopeeIndices = state.marketplaces
+                .map((mp, idx) => mp.name.includes('Shopee') ? idx : -1)
+                .filter(idx => idx !== -1);
+            
+            return shopeeIndices.length > 0 && shopeeIndices.every(idx => state.selectedMarketplaces.includes(idx));
+        }
+
+        function toggleShopeeGroupSelection() {
+            const shopeeIndices = state.marketplaces
+                .map((mp, idx) => mp.name.includes('Shopee') ? idx : -1)
+                .filter(idx => idx !== -1);
+            
+            const allSelected = shopeeIndices.every(idx => state.selectedMarketplaces.includes(idx));
+            
+            shopeeIndices.forEach(idx => {
+                if (allSelected) {
+                    const position = state.selectedMarketplaces.indexOf(idx);
+                    if (position > -1) {
+                        state.selectedMarketplaces.splice(position, 1);
+                    }
+                } else {
+                    if (!state.selectedMarketplaces.includes(idx)) {
+                        state.selectedMarketplaces.push(idx);
+                    }
+                }
+            });
+            
+            renderMarketplacesList();
+            updateSelectedCount();
+            renderResults();
+        }
+
+        function updateShopeeGroupCheckbox() {
+            const checkbox = document.getElementById('shopee-group-checkbox');
+            if (checkbox) {
+                checkbox.checked = isShopeeGroupSelected();
+            }
+        }
+
+        // ==================== FUNÇÕES PARA TRAY ====================
+
+        function toggleTrayGroup() {
+            state.trayGroupExpanded = !state.trayGroupExpanded;
+            const groups = document.querySelectorAll('.marketplace-group');
+            if (groups[2]) {
+                groups[2].classList.toggle('expanded');
+            }
+        }
+
+        function isTrayGroupSelected() {
+            const trayIndices = state.marketplaces
+                .map((mp, idx) => mp.name.includes('Tray') ? idx : -1)
+                .filter(idx => idx !== -1);
+            
+            return trayIndices.length > 0 && trayIndices.every(idx => state.selectedMarketplaces.includes(idx));
+        }
+
+        function toggleTrayGroupSelection() {
+            const trayIndices = state.marketplaces
+                .map((mp, idx) => mp.name.includes('Tray') ? idx : -1)
+                .filter(idx => idx !== -1);
+            
+            const allSelected = trayIndices.every(idx => state.selectedMarketplaces.includes(idx));
+            
+            trayIndices.forEach(idx => {
+                if (allSelected) {
+                    const position = state.selectedMarketplaces.indexOf(idx);
+                    if (position > -1) {
+                        state.selectedMarketplaces.splice(position, 1);
+                    }
+                } else {
+                    if (!state.selectedMarketplaces.includes(idx)) {
+                        state.selectedMarketplaces.push(idx);
+                    }
+                }
+            });
+            
+            renderMarketplacesList();
+            updateSelectedCount();
+            renderResults();
+        }
+
+        function updateTrayGroupCheckbox() {
+            const checkbox = document.getElementById('tray-group-checkbox');
+            if (checkbox) {
+                checkbox.checked = isTrayGroupSelected();
             }
         }
 
